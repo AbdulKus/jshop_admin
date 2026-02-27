@@ -33,6 +33,8 @@ const refs = {
   lotFormTitle: document.getElementById("lotFormTitle"),
   lotCategorySelect: document.getElementById("lotCategorySelect"),
   lotResetBtn: document.getElementById("lotResetBtn"),
+  lotBulkForm: document.getElementById("lotBulkForm"),
+  lotBulkJson: document.getElementById("lotBulkJson"),
 
   categoriesTableBody: document.getElementById("categoriesTableBody"),
   categoryForm: document.getElementById("categoryForm"),
@@ -153,6 +155,7 @@ function renderLots() {
         <td>
           <div class="row-actions">
             <button type="button" data-action="edit-lot" data-id="${lot.slug}">Изм.</button>
+            <button type="button" data-action="duplicate-lot" data-id="${lot.slug}">Дубль</button>
             <button type="button" class="danger" data-action="delete-lot" data-id="${lot.slug}">Удалить</button>
           </div>
         </td>
@@ -404,6 +407,45 @@ refs.lotForm.addEventListener("submit", async (event) => {
   }
 });
 
+refs.lotBulkForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const raw = refs.lotBulkJson.value.trim();
+  if (!raw) {
+    setStatus("Заполните JSON для массового создания", "error");
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    setStatus(`Невалидный JSON: ${error.message}`, "error");
+    return;
+  }
+
+  const items = Array.isArray(parsed) ? parsed : parsed.items;
+  if (!Array.isArray(items) || !items.length) {
+    setStatus("JSON должен содержать массив лотов", "error");
+    return;
+  }
+
+  try {
+    const result = await apiRequest("/api/v1/admin/lots/bulk", {
+      method: "POST",
+      body: {
+        items
+      }
+    });
+    await Promise.all([refreshLots(), refreshDashboard()]);
+    const createdCount = Array.isArray(result.created) ? result.created.length : 0;
+    const errorCount = Array.isArray(result.errors) ? result.errors.length : 0;
+    setStatus(`Bulk: создано ${createdCount}, ошибок ${errorCount}`, errorCount ? "error" : "ok");
+  } catch (error) {
+    setStatus(`Ошибка bulk-создания: ${error.message}`, "error");
+  }
+});
+
 refs.categoryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(refs.categoryForm);
@@ -489,6 +531,27 @@ refs.lotsTableBody.addEventListener("click", async (event) => {
     const lot = state.lots.find((item) => item.slug === lotId);
     if (lot) {
       openLotEditor(lot);
+    }
+    return;
+  }
+
+  if (action === "duplicate-lot") {
+    const newSlug = window.prompt("Новый slug для дубликата:", `${lotId}-copy`);
+    if (!newSlug) {
+      return;
+    }
+
+    try {
+      await apiRequest(`/api/v1/admin/lots/${lotId}/duplicate`, {
+        method: "POST",
+        body: {
+          new_slug: newSlug.trim()
+        }
+      });
+      await Promise.all([refreshLots(), refreshDashboard()]);
+      setStatus(`Лот ${lotId} продублирован как ${newSlug.trim()}`, "ok");
+    } catch (error) {
+      setStatus(`Ошибка дублирования лота: ${error.message}`, "error");
     }
     return;
   }

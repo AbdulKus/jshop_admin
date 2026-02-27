@@ -79,6 +79,17 @@
           <button id="lotResetBtn" type="button" class="ghost">Сброс</button>
         </div>
       </form>
+
+      <form id="lotBulkForm" class="form-stack compact">
+        <h3>Массовое создание лотов</h3>
+        <label>
+          JSON массив `LotCreate` или объект `{ \"items\": [...] }`
+          <textarea id="lotBulkJson" rows="8" placeholder='[{"slug":"new-lot","name":"New Lot","category_code":"ring","price":1000}]'></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Создать пачкой</button>
+        </div>
+      </form>
     </section>
 
     <section class="panel">

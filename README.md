@@ -6,6 +6,8 @@ Static admin panel for `jshop_backend`.
 
 - Dashboard counters.
 - CRUD for lots.
+- Bulk lot creation from JSON payload.
+- Lot duplication action from table.
 - CRUD for categories.
 - CRUD for contact channels.
 
