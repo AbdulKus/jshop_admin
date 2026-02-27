@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jshop admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>jshop admin</h1>
+    <form id="apiForm" class="api-form">
+      <label>
+        API Base
+        <input id="apiBaseInput" type="url" placeholder="http://127.0.0.1:8000" required>
+      </label>
+      <button type="submit">Подключить</button>
+    </form>
+  </header>
+
+  <p id="statusMessage" class="status">Ожидание подключения...</p>
+
+  <section class="dashboard" id="dashboardCards"></section>
+
+  <main class="grid">
+    <section class="panel">
+      <h2>Лоты</h2>
+
+      <div class="inline-controls">
+        <label>
+          Поиск
+          <input id="lotsSearch" type="search" placeholder="Название или описание">
+        </label>
+        <label>
+          Категория
+          <select id="lotsCategoryFilter">
+            <option value="all">Все</option>
+          </select>
+        </label>
+        <button id="refreshLotsBtn" type="button">Обновить</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Slug</th>
+              <th>Название</th>
+              <th>Категория</th>
+              <th>Цена</th>
+              <th>Статус</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="lotsTableBody"></tbody>
+        </table>
+      </div>
+
+      <form id="lotForm" class="form-stack">
+        <h3 id="lotFormTitle">Новый лот</h3>
+        <div class="form-grid">
+          <label>Slug<input name="slug" required></label>
+          <label>Название<input name="name" required></label>
+          <label>Категория<select name="category_code" id="lotCategorySelect" required></select></label>
+          <label>Цена<input name="price" type="number" min="0" required></label>
+          <label>Sort Order<input name="sort_order" type="number" min="0" value="0"></label>
+          <label>Glitch BG<input name="glitch_background" placeholder="bg_glitch/xxx.jpg"></label>
+          <label class="checkbox"><input name="featured" type="checkbox"> Featured</label>
+          <label class="checkbox"><input name="sold" type="checkbox"> Sold</label>
+        </div>
+        <label>Описание<textarea name="description" rows="3"></textarea></label>
+        <label>Specs (каждый пункт с новой строки)<textarea name="specs" rows="3"></textarea></label>
+        <label>Images (каждая ссылка с новой строки)<textarea name="images" rows="4"></textarea></label>
+        <div class="actions">
+          <button type="submit">Сохранить</button>
+          <button id="lotResetBtn" type="button" class="ghost">Сброс</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Категории</h2>
+      <div class="table-wrap small">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Label</th>
+              <th>Sort</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="categoriesTableBody"></tbody>
+        </table>
+      </div>
+
+      <form id="categoryForm" class="form-stack compact">
+        <h3 id="categoryFormTitle">Новая категория</h3>
+        <label>Code<input name="code" required></label>
+        <label>Label<input name="label" required></label>
+        <label>Sort Order<input name="sort_order" type="number" min="0" value="0"></label>
+        <div class="actions">
+          <button type="submit">Сохранить</button>
+          <button id="categoryResetBtn" type="button" class="ghost">Сброс</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Контакты</h2>
+      <div class="table-wrap small">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Label</th>
+              <th>Hint</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="contactsTableBody"></tbody>
+        </table>
+      </div>
+
+      <form id="contactForm" class="form-stack compact">
+        <h3 id="contactFormTitle">Новый контакт</h3>
+        <label>Code<input name="code" required></label>
+        <label>Label<input name="label" required></label>
+        <label>Hint<input name="hint"></label>
+        <label>URL Template<input name="url_template" placeholder="https://..."></label>
+        <label>Subject Template<input name="subject_template" placeholder="Заказ: {lot_name}"></label>
+        <label>Body Template<textarea name="body_template" rows="2"></textarea></label>
+        <label>Sort Order<input name="sort_order" type="number" min="0" value="0"></label>
+        <label class="checkbox"><input name="is_external" type="checkbox" checked> Открывать в новой вкладке</label>
+        <label>SVG Icon<textarea name="icon_svg" rows="4"></textarea></label>
+        <div class="actions">
+          <button type="submit">Сохранить</button>
+          <button id="contactResetBtn" type="button" class="ghost">Сброс</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
