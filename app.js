@@ -14,9 +14,11 @@ const state = {
   categories: [],
   contacts: [],
   lots: [],
+  siteTexts: [],
   editingLotSlug: null,
   editingCategoryCode: null,
-  editingContactCode: null
+  editingContactCode: null,
+  editingSiteTextKey: null
 };
 
 const refs = {
@@ -44,7 +46,12 @@ const refs = {
   contactsTableBody: document.getElementById("contactsTableBody"),
   contactForm: document.getElementById("contactForm"),
   contactFormTitle: document.getElementById("contactFormTitle"),
-  contactResetBtn: document.getElementById("contactResetBtn")
+  contactResetBtn: document.getElementById("contactResetBtn"),
+
+  siteTextsTableBody: document.getElementById("siteTextsTableBody"),
+  siteTextForm: document.getElementById("siteTextForm"),
+  siteTextFormTitle: document.getElementById("siteTextFormTitle"),
+  siteTextResetBtn: document.getElementById("siteTextResetBtn")
 };
 
 function setStatus(message, type = "") {
@@ -125,7 +132,9 @@ function renderDashboard() {
     ["Доступно", state.dashboard.lots_available],
     ["Продано", state.dashboard.lots_sold],
     ["Категории", state.dashboard.categories_total],
-    ["Контакты", state.dashboard.contacts_total]
+    ["Контакты", state.dashboard.contacts_total],
+    ["Текстов сайта", state.dashboard.site_texts_total],
+    ["Визитов", state.dashboard.visits_count]
   ];
 
   refs.dashboardCards.innerHTML = cards
@@ -205,6 +214,24 @@ function renderContacts() {
     .join("");
 }
 
+function renderSiteTexts() {
+  refs.siteTextsTableBody.innerHTML = state.siteTexts
+    .map(
+      (item) => `
+      <tr>
+        <td>${item.key}</td>
+        <td>${String(item.value || "").slice(0, 120)}</td>
+        <td>
+          <div class="row-actions">
+            <button type="button" data-action="edit-site-text" data-id="${item.key}">Изм.</button>
+          </div>
+        </td>
+      </tr>
+    `
+    )
+    .join("");
+}
+
 function resetLotForm() {
   state.editingLotSlug = null;
   refs.lotForm.reset();
@@ -227,6 +254,13 @@ function resetContactForm() {
   refs.contactForm.elements.is_external.checked = true;
   refs.contactForm.elements.code.disabled = false;
   refs.contactFormTitle.textContent = "Новый контакт";
+}
+
+function resetSiteTextForm() {
+  state.editingSiteTextKey = null;
+  refs.siteTextForm.reset();
+  refs.siteTextForm.elements.key.disabled = false;
+  refs.siteTextFormTitle.textContent = "Редактирование текста";
 }
 
 function openLotEditor(lot) {
@@ -269,6 +303,15 @@ function openContactEditor(contact) {
   refs.contactForm.elements.code.disabled = true;
 }
 
+function openSiteTextEditor(item) {
+  state.editingSiteTextKey = item.key;
+  refs.siteTextFormTitle.textContent = `Редактирование: ${item.key}`;
+  refs.siteTextForm.elements.key.value = item.key;
+  refs.siteTextForm.elements.value.value = item.value || "";
+  refs.siteTextForm.elements.description.value = item.description || "";
+  refs.siteTextForm.elements.key.disabled = true;
+}
+
 async function refreshDashboard() {
   state.dashboard = await apiRequest("/api/v1/admin/dashboard");
   renderDashboard();
@@ -283,6 +326,11 @@ async function refreshCategories() {
 async function refreshContacts() {
   state.contacts = await apiRequest("/api/v1/admin/contacts");
   renderContacts();
+}
+
+async function refreshSiteTexts() {
+  state.siteTexts = await apiRequest("/api/v1/admin/site-texts");
+  renderSiteTexts();
 }
 
 async function refreshLots() {
@@ -303,7 +351,7 @@ async function refreshLots() {
 }
 
 async function fullReload() {
-  await Promise.all([refreshDashboard(), refreshCategories(), refreshContacts()]);
+  await Promise.all([refreshDashboard(), refreshCategories(), refreshContacts(), refreshSiteTexts()]);
   await refreshLots();
 }
 
@@ -318,6 +366,7 @@ async function connect() {
     resetLotForm();
     resetCategoryForm();
     resetContactForm();
+    resetSiteTextForm();
     setStatus(`Подключено к ${state.apiBase}`, "ok");
   } catch (error) {
     setStatus(`Ошибка API: ${error.message}`, "error");
@@ -366,6 +415,10 @@ refs.categoryResetBtn.addEventListener("click", () => {
 
 refs.contactResetBtn.addEventListener("click", () => {
   resetContactForm();
+});
+
+refs.siteTextResetBtn.addEventListener("click", () => {
+  resetSiteTextForm();
 });
 
 refs.lotForm.addEventListener("submit", async (event) => {
@@ -515,6 +568,34 @@ refs.contactForm.addEventListener("submit", async (event) => {
   }
 });
 
+refs.siteTextForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(refs.siteTextForm);
+  const formKey = String(form.get("key") || "").trim();
+  const key = state.editingSiteTextKey || formKey;
+  const payload = {
+    value: String(form.get("value") || ""),
+    description: String(form.get("description") || "").trim()
+  };
+
+  if (!key) {
+    setStatus("Укажите key текста", "error");
+    return;
+  }
+
+  try {
+    await apiRequest(`/api/v1/admin/site-texts/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      body: payload
+    });
+    await Promise.all([refreshSiteTexts(), refreshDashboard()]);
+    resetSiteTextForm();
+    setStatus(`Текст ${key} сохранен`, "ok");
+  } catch (error) {
+    setStatus(`Ошибка сохранения текста: ${error.message}`, "error");
+  }
+});
+
 refs.lotsTableBody.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
@@ -645,6 +726,24 @@ refs.contactsTableBody.addEventListener("click", async (event) => {
     } catch (error) {
       setStatus(`Ошибка удаления контакта: ${error.message}`, "error");
     }
+  }
+});
+
+refs.siteTextsTableBody.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const action = target.dataset.action;
+  const key = target.dataset.id;
+  if (action !== "edit-site-text" || !key) {
+    return;
+  }
+
+  const item = state.siteTexts.find((entry) => entry.key === key);
+  if (item) {
+    openSiteTextEditor(item);
   }
 });
 

@@ -153,6 +153,33 @@
         </div>
       </form>
     </section>
+
+    <section class="panel">
+      <h2>Тексты сайта</h2>
+      <div class="table-wrap small">
+        <table>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Текст</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="siteTextsTableBody"></tbody>
+        </table>
+      </div>
+
+      <form id="siteTextForm" class="form-stack compact">
+        <h3 id="siteTextFormTitle">Редактирование текста</h3>
+        <label>Key<input name="key" required></label>
+        <label>Текст<textarea name="value" rows="4" required></textarea></label>
+        <label>Описание<input name="description"></label>
+        <div class="actions">
+          <button type="submit">Сохранить</button>
+          <button id="siteTextResetBtn" type="button" class="ghost">Сброс</button>
+        </div>
+      </form>
+    </section>
   </main>
 
   <script type="module" src="app.js"></script>

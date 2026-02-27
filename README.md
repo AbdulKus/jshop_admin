@@ -10,6 +10,7 @@ Static admin panel for `jshop_backend`.
 - Lot duplication action from table.
 - CRUD for categories.
 - CRUD for contact channels.
+- Editable site text dictionary (all storefront text keys).
 
 ## Run
 
